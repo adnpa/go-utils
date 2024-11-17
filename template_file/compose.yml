@@ -1,0 +1,40 @@
+services:
+  #  web:
+  #    build: .
+  #    depends_on:
+  #      - postgres
+  #      - redis
+  #    ports:
+  #      - "8081:8081"
+  app:
+    build: .
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8081:8081"
+    networks:
+      - back-tier
+  postgres:
+    image: "postgres:13"
+    restart: always
+    environment:
+      POSTGRES_USER: srbbs
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./script/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    networks:
+      - back-tier
+  redis:
+    image: "redis:alpine"
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - back-tier
+
+networks:
+  #  front-tier:
+  back-tier:
