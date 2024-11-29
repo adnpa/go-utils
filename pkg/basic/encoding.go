@@ -2,9 +2,11 @@ package basic
 
 import (
 	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/vmihailenco/msgpack/v5"
 	"gopkg.in/yaml.v3"
 )
 
@@ -40,4 +42,30 @@ func UnmarshalYaml(data []byte, config interface{}, errorOnUnmatchedKeys bool) (
 		return dec.Decode(config)
 	}
 	return yaml.Unmarshal(data, config)
+}
+
+func MarshalGob(data interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	err := encoder.Encode(data)
+	if err != nil {
+		return nil, err
+	}
+	encodedBytes := buf.Bytes()
+	return encodedBytes, nil
+}
+
+func UnmarshalGob(data []byte, res interface{}) error {
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	return dec.Decode(res)
+
+}
+
+func MarshalMsPack(data interface{}) ([]byte, error) {
+	return msgpack.Marshal(data)
+}
+
+func UnmarshalMsPack(data []byte, res interface{}) error {
+	return msgpack.Unmarshal(data, res)
 }

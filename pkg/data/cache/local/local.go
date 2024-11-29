@@ -1,7 +1,7 @@
 package local
 
-type Cache interface {
-	Set(key string, data []byte)
-	Get(key string) ([]byte, bool)
+type Local interface {
+	Get(key string) (interface{}, bool)
+	Set(key string, val interface{})
 	Del(key string)
 }
