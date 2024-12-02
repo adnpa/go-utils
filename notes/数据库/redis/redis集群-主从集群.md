@@ -1,4 +1,108 @@
-https://redis.io/docs/latest/operate/oss_and_stack/management/scaling/
+https://redis.io/docs/latest/operate/oss_and_stack/management/replication/
+
+
+
+## 拓扑结构
+
+| IP            | PORT | 角色   |
+| ------------- | ---- | ------ |
+| 192.168.1.130 | 7001 | master |
+| 192.168.1.130 | 7002 | slave  |
+| 192.168.1.130 | 7003 | slave  |
+
+
+
+## 准备配置
+
+```
+# 守护进行模式启动
+daemonize no
+
+# 集群相关配置
+# 是否以集群模式启动
+cluster-enabled yes
+
+# 集群节点回应最长时间，超过该时间被认为下线
+cluster-node-timeout 15000
+
+# 生成的集群节点配置文件名，文件名需要修改
+cluster-config-file nodes_6379.conf
+```
+
+
+
+7001
+
+```
+bind 192.168.1.130
+replica-announce-ip 192.168.1.130
+port 7001
+dir /home/hz/testredis/7001
+save 3600 1 300 100 60 10000
+appendonly no
+```
+
+7002
+
+```
+bind 192.168.1.130
+replica-announce-ip 192.168.1.130
+slaveof 192.168.1.130 7001
+port 7002
+dir /home/hz/testredis/7002
+save 3600 1 300 100 60 10000
+appendonly no
+```
+
+7003
+
+```
+bind 192.168.1.130
+replica-announce-ip 192.168.1.130
+slaveof 192.168.1.130 7001
+port 7003
+dir /home/hz/testredis/7003
+save 3600 1 300 100 60 10000
+appendonly no
+```
+
+相关linux命令
+
+```sh
+echo 7001 7002 7003 | xargs -t -n 1 cp /etc/redis/redis.conf
+
+sed -i -e 's/6379/7001/g' -e 's/dir .\//dir \/tmp\/7001\//g' 7001/redis.conf
+sed -i -e 's/6379/7002/g' -e 's/dir .\//dir \/tmp\/7002\//g' 7001/redis.conf
+sed -i -e 's/6379/7003/g' -e 's/dir .\//dir \/tmp\/7003\//g' 7001/redis.conf
+```
+
+## 开启主从关系
+
+配置中 slaveof 永久生效，命令行中使用重启失效
+
+## 启动
+
+```sh
+redis-server redis.conf
+```
+
+## 测试
+
+```sh
+hz@hz:~$ redis-cli -h 192.168.1.130 -p 7001
+192.168.1.130:7001> set num 123
+OK
+192.168.1.130:7001> exit
+
+
+hz@hz:~$ redis-cli -h 192.168.1.130 -p 7002
+192.168.1.130:7002> get num
+"123"
+192.168.1.130:7002> set abc 111
+(error) READONLY You can't write against a read only replica.
+```
+
+
 
 
 
