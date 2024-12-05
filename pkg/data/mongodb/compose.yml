@@ -1,0 +1,4 @@
+#mongodb 集群部署
+services:
+
+networks:

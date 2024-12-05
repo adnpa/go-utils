@@ -1,37 +1,62 @@
+# 单节点部署 用于原型测试
+
 services:
-  #  web:
+  #  app:
   #    build: .
   #    depends_on:
   #      - postgres
   #      - redis
   #    ports:
   #      - "8081:8081"
-  app:
-    build: .
-    depends_on:
-      - postgres
-      - redis
-    ports:
-      - "8081:8081"
-    networks:
-      - back-tier
-  postgres:
-    image: "postgres:13"
+  #    networks:
+  #      - back-tier
+  #
+  db:
+    image: mysql
     restart: always
-    environment:
-      POSTGRES_USER: srbbs
-      POSTGRES_PASSWORD: 123456
     ports:
-      - "5432:5432"
-    volumes:
-      - ./script/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: example
     networks:
       - back-tier
+
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_BASICAUTH: false
+
   redis:
     image: "redis:alpine"
     restart: always
     ports:
       - "6379:6379"
+    networks:
+      - back-tier
+
+  etcd:
+    image: 'bitnami/etcd:latest'
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    ports:
+      - 2379:2379
+      - 2380:2380
     networks:
       - back-tier
 
