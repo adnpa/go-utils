@@ -1,10 +1,11 @@
-package basic
+package utils
 
 import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+
 	"github.com/BurntSushi/toml"
 	"github.com/vmihailenco/msgpack/v5"
 	"gopkg.in/yaml.v3"

@@ -37,6 +37,21 @@ func Unmarshal(data []byte, v interface{}) error
 * 结构体属性名必须是导出的（大写开头，exported）
   json里的属性名同名即可，如果不同名需要使用标签映射 `json:"Name"`
 
+```go
+	//批量读到数组
+	f, err := os.Open("test_data/data.json")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, "")
+		return
+	}
+	bytes, _ := io.ReadAll(f)
+	var data []interface{}
+	// err = json.NewDecoder(f).Decode(&data)
+	err = json.Unmarshal(bytes, &data)
+```
+
+
+
 ## 通用json
 
 当不知道json的类型时，可以使用 interface{} 解码，将返回 string-interface{} 的map数据
@@ -70,22 +85,39 @@ type IncomingMessage struct {
 包装 io.Reader 和 io.Writer 接口，用于支持 json 流
 
 ```go
-dec := json.NewDecoder(os.Stdin)
-enc := json.NewEncoder(os.Stdout)
-for {
-    var v map[string]interface{}
-    if err := dec.Decode(&v); err != nil {
-        log.Println(err)
-        return
-    }
-    for k := range v {
-        if k != "Name" {
-            delete(v, k)
-        }
-    }
-    if err := enc.Encode(&v); err != nil {
-        log.Println(err)
-    }
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"strings"
+)
+
+func main() {
+	const jsonStream = `
+	{"Name": "Ed", "Text": "Knock knock."}
+	{"Name": "Sam", "Text": "Who's there?"}
+	{"Name": "Ed", "Text": "Go fmt."}
+	{"Name": "Sam", "Text": "Go fmt who?"}
+	{"Name": "Ed", "Text": "Go fmt yourself!"}
+`
+	type Message struct {
+		Name, Text string
+	}
+	dec := json.NewDecoder(strings.NewReader(jsonStream))
+	for {
+		var m Message
+		if err := dec.Decode(&m); err == io.EOF {
+			break
+		} else if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s: %s\n", m.Name, m.Text)
+	}
+}
+
 ```
 
 由于Readers和Writers的普遍性，这些编码器和解码器类型可以用于广泛的场景，例如读取和写入 HTTP 连接、WebSocket 或文件。
